@@ -61,3 +61,11 @@ Freeform research notes for StroomMoment.
 - Start simple: no queue, no worker, no TimescaleDB unless needed.
 - For the first data fetcher, fetch and normalize Elia `ods002`, `ods087`, and `ods086` only.
 - For MVP scoring, omit unavailable CO2 and price metrics and renormalize weights.
+
+## Deployment Notes
+
+- Public PoC target is `https://poc.coolsnet.com`.
+- The public Compose deployment uses a small Caddy router so the browser can call same-origin `/api/...` and the backend service is not directly exposed.
+- The previous wall-screen PoC on `poc.coolsnet.com` can be removed or bypassed when StroomMoment is live.
+- No Git remote exists yet; first deployment may use a temporary Git bundle/manual copy, but Git pull deployment is preferred once a remote exists.
+- Persistent file cache is enough for the PoC. Keep SQLite, PostgreSQL, TimescaleDB, and InfluxDB open for later discussion.

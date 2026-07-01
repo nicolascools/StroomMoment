@@ -54,3 +54,12 @@
 - Partial: add missing-data and stale-data UI states; source-level warnings are implemented, broader empty states can improve later.
 - Completed: add source attribution and licensing notes.
 - Test with a few real appliance scenarios.
+
+## Public PoC Deployment Follow-Up
+
+- Completed: document the public `poc.coolsnet.com` deployment path.
+- Completed: keep the public PoC stateless with no accounts, no authentication, and no user database.
+- Completed: keep persistent backend cache as a file cache for now.
+- Create a real Git remote before relying on `git pull` deployment.
+- Consider SQLite, PostgreSQL, TimescaleDB, or InfluxDB only after the PoC shows a concrete need for history, analytics, or user-specific state.
+- Consider CI/CD later with GitHub/Gitea and versioned Docker images.

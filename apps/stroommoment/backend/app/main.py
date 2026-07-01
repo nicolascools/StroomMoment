@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+import os
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Query
@@ -12,12 +13,18 @@ from app.services.signals import SignalService
 from app.scoring.windows import build_recommendation
 
 BRUSSELS = ZoneInfo("Europe/Brussels")
+DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000,https://poc.coolsnet.com"
+
+
+def cors_origins() -> list[str]:
+    raw = os.getenv("STROOMMOMENT_CORS_ORIGINS", DEFAULT_CORS_ORIGINS)
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 app = FastAPI(title="StroomMoment API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=cors_origins(),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

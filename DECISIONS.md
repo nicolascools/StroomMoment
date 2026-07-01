@@ -91,3 +91,21 @@ Rationale: Price is valuable but optional. Recommendations must continue working
 Decision: The MVP uses a backend-owned static appliance catalog for default duration, assumed power, power options, and capacity-tariff notes.
 
 Rationale: This makes the appliance planner real without adding accounts, personal profiles, P1 ingestion, or false precision about household peaks. Power assumptions are informational and can be overridden by the user.
+
+## 2026-07-01: Public PoC Uses `poc.coolsnet.com`
+
+Decision: Deploy StroomMoment publicly at `https://poc.coolsnet.com` as a stateless public PoC without authentication.
+
+Rationale: The goal is early public validation, not a full production platform. The previous wall-screen PoC using this hostname can be replaced.
+
+## 2026-07-01: Defer User Accounts And User Database
+
+Decision: Do not add accounts, authentication, or a user database for the public PoC.
+
+Rationale: The app currently does not need personal user data. Future accounts may be useful for saved preferences, tariffs, locations, or Home Assistant/P1 integrations, but they should not block deployment.
+
+## 2026-07-01: Public PoC Keeps Persistent File Cache
+
+Decision: Use a persistent host-mounted file cache for the backend on the public PoC.
+
+Rationale: File cache is enough for the current public source data and keeps operations simple. SQLite, PostgreSQL, TimescaleDB, and InfluxDB remain future options if historical storage, querying, or user-specific data become important.

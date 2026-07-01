@@ -98,6 +98,19 @@ cd C:\Projects\StroomMoment\apps\stroommoment
 docker compose up --build
 ```
 
+The Compose stack exposes a local router on `http://localhost:8080` and keeps backend/frontend service ports internal.
+
+## Deployment
+
+The public Proxmox PoC deployment is documented in `DEPLOYMENT.md`.
+
+Current target:
+
+- public URL: `https://poc.coolsnet.com`
+- app host: `stroommoment-01` at `192.168.1.47`
+- app root: `/opt/stroommoment`
+- persistent cache: `/var/lib/stroommoment/cache`
+
 ## Product Principle
 
 The app should be useful in simple mode and trustworthy in nerd mode.

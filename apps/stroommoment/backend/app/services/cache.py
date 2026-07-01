@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -9,7 +10,8 @@ from typing import Any
 
 class FileCache:
     def __init__(self, cache_dir: Path | None = None, ttl_seconds: int = 300) -> None:
-        self.cache_dir = cache_dir or Path(__file__).resolve().parents[2] / ".cache"
+        configured_cache_dir = os.getenv("STROOMMOMENT_CACHE_DIR")
+        self.cache_dir = cache_dir or (Path(configured_cache_dir) if configured_cache_dir else Path(__file__).resolve().parents[2] / ".cache")
         self.ttl = timedelta(seconds=ttl_seconds)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
