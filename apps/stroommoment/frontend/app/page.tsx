@@ -1,8 +1,19 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL?.trim() ?? "";
 
 type Freshness = {
   source: string;
@@ -93,10 +104,40 @@ const modes = ["balanced", "renewable", "low_load", "cheapest"];
 const eliaOpenDataUrl = "https://opendata.elia.be/pages/home/";
 const energyChartsUrl = "https://www.energy-charts.info/charts/price_spot_market/chart.htm?l=en&c=BE";
 
+type SignalChartPoint = {
+  time: string;
+  label: string;
+  price: number | null;
+  pv: number | null;
+  wind: number | null;
+  renewable: number | null;
+  load: number | null;
+};
+
+type ChartTooltipPayload = {
+  dataKey?: string | number;
+  name?: string | number;
+  value?: number | string | null;
+};
+
+type ChartTooltipProps = {
+  active?: boolean;
+  payload?: ChartTooltipPayload[];
+  label?: string;
+};
+
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-BE", {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone: "Europe/Brussels",
+  }).format(new Date(value));
+}
+
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat("en-BE", {
+    hour: "2-digit",
+    minute: "2-digit",
     timeZone: "Europe/Brussels",
   }).format(new Date(value));
 }
@@ -128,6 +169,11 @@ function formatPrice(value: number | null) {
   if (value === null || Number.isNaN(value)) return "-";
   const eurKwh = value / 1000;
   return `${formatNumber(value, 2)} EUR/MWh (${eurKwh.toFixed(3)} EUR/kWh)`;
+}
+
+function formatPriceShort(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) return "-";
+  return `${formatNumber(value, 0)} EUR/MWh`;
 }
 
 function formatOptionalDateTime(value: string | null | undefined) {
@@ -164,6 +210,22 @@ function latestFreshnessTimestamp(items: Freshness[]) {
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime());
   return timestamps[0] ?? null;
+}
+
+function signalChartData(points: ForecastPoint[]): SignalChartPoint[] {
+  return points.slice(0, 96).map((point) => ({
+    time: point.timestamp_brussels,
+    label: formatTime(point.timestamp_brussels),
+    price: point.price_eur_mwh,
+    pv: point.pv_forecast_mw,
+    wind: point.wind_forecast_mw,
+    renewable: point.renewable_forecast_mw,
+    load: point.load_forecast_mw,
+  }));
+}
+
+function windowLabel(window: CandidateWindow) {
+  return `${formatTime(window.start_brussels)}-${formatTime(window.end_brussels)}`;
 }
 
 export default function Home() {
@@ -275,7 +337,18 @@ export default function Home() {
       <section className="hero">
         <p className="eyebrow">StroomMoment MVP</p>
         <h1>When should I use electricity?</h1>
-        <p className="lead">Belgian load, PV, and wind forecasts turned into appliance timing recommendations.</p>
+        <p className="lead">Choose better times to run flexible electricity loads in Belgium.</p>
+      </section>
+
+      <section className="card intro-card">
+        <div>
+          <h2>Public PoC</h2>
+          <p>
+            Pick an appliance and deadline. StroomMoment recommends a window using Belgian load, PV/wind forecasts, and day-ahead price signals from public/available sources.
+          </p>
+          <p className="hint">It does not know your contract, exact tariff, household load, or P1 meter yet. Personal savings and real peak avoidance need that data later.</p>
+        </div>
+        <FeedbackBlock />
       </section>
 
       {!mounted ? (
@@ -321,9 +394,7 @@ export default function Home() {
         </article>
 
         <article className="card">
-          <h2>Default Recommendation</h2>
-          <p>{recommendation?.appliance ? `${recommendation.appliance.label}, ${recommendation.duration_minutes} minutes before ${formatDateTime(recommendation.deadline_brussels)}.` : "Default dishwasher before tomorrow 07:00."}</p>
-          <BestWindow window={recommendation?.best_window ?? null} />
+          <RecommendationSummary recommendation={recommendation} freshnessWarning={freshnessWarning} />
         </article>
       </section> : null}
 
@@ -376,11 +447,15 @@ export default function Home() {
         {recommendation?.appliance_impact ? <ApplianceImpactSummary impact={recommendation.appliance_impact} /> : null}
       </section> : null}
 
+      {signals ? <SignalCharts points={signals.points} /> : null}
+
+      {recommendation?.top_windows.length ? <CandidateWindowBars windows={recommendation.top_windows} /> : null}
+
       {recommendation ? (
         <section className="grid two">
           <article className="card">
-            <h2>Best Window</h2>
-            <BestWindow window={recommendation.best_window} />
+            <h2>Peak Note</h2>
+            {recommendation.appliance_impact ? <ApplianceImpactSummary impact={recommendation.appliance_impact} compact /> : <p className="hint">Select an appliance with power data to see capacity-tariff context.</p>}
             {recommendation.warnings.map((warning) => <p className="warning" key={warning}>{warning}</p>)}
           </article>
           <article className="card">
@@ -470,6 +545,201 @@ export default function Home() {
   );
 }
 
+function FeedbackBlock() {
+  return (
+    <div className="feedback-card">
+      <strong>Tester feedback</strong>
+      <p>Spot confusing advice, stale data, or weird appliance assumptions?</p>
+      {FEEDBACK_URL ? (
+        <a className="button-link" href={FEEDBACK_URL} target="_blank" rel="noreferrer">Send feedback</a>
+      ) : (
+        <p className="hint">Feedback channel coming soon.</p>
+      )}
+    </div>
+  );
+}
+
+function RecommendationSummary({ recommendation, freshnessWarning }: { recommendation: Recommendation | null; freshnessWarning: boolean }) {
+  const window = recommendation?.best_window;
+  if (!recommendation || !window) {
+    return (
+      <div className="recommendation-summary">
+        <h2>Best Recommendation</h2>
+        <p>No feasible recommendation yet. Adjust the appliance, duration, or deadline and calculate again.</p>
+      </div>
+    );
+  }
+
+  const priceContributed = window.score.price_score !== null && (window.score.weights.price_score ?? 0) > 0;
+  const applianceImpact = recommendation.appliance_impact;
+
+  return (
+    <div className="recommendation-summary">
+      <p className="eyebrow mini">Best window</p>
+      <h2>{formatTime(window.start_brussels)}-{formatTime(window.end_brussels)}</h2>
+      <p>
+        {recommendation.appliance?.label ?? "Selected load"}, {recommendation.duration_minutes} minutes before {formatDateTime(recommendation.deadline_brussels)}.
+      </p>
+      <div className="score-grid">
+        <span>Total {scorePercent(window.score.total)}</span>
+        {window.score.price_score !== null ? <span>Price {scorePercent(window.score.price_score)}</span> : null}
+        <span>Renewable {scorePercent(window.score.renewable_score)}</span>
+        <span>Low load {scorePercent(window.score.low_load_score)}</span>
+        <span>Convenience {scorePercent(window.score.convenience_score)}</span>
+      </div>
+      <h3>Why this window</h3>
+      <ul className="reason-list">
+        {window.explanations.map((explanation) => <li key={explanation}>{explanation}</li>)}
+        <li>{priceContributed ? "Price data contributed to the score." : "Price data did not drive this recommendation."}</li>
+        <li>{window.average_renewable_share_of_load !== null ? `PV/wind forecast covers about ${scorePercent(window.average_renewable_share_of_load)} of Belgian load in this window.` : "Renewable-share data is incomplete for this window."}</li>
+        <li>{window.average_load_mw !== null ? `Belgian load forecast averages ${formatNumber(window.average_load_mw)} MW.` : "Belgian load data is incomplete for this window."}</li>
+        <li>{freshnessWarning ? "Some source data is stale or unavailable; check the freshness panel." : "Source freshness looks usable for this recommendation."}</li>
+      </ul>
+      {applianceImpact ? (
+        <p className="peak-note">
+          Peak note: assumed power is {formatKw(applianceImpact.assumed_power_kw)}. Without P1/live meter data, StroomMoment cannot know your real monthly peak. Avoid combining this with EV charging, cooking, boiler, dryer, or other large loads.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function SignalCharts({ points }: { points: ForecastPoint[] }) {
+  const data = signalChartData(points);
+  if (!data.length) return null;
+  return (
+    <section className="charts-section">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow mini">Signals</p>
+          <h2>What the recommendation sees</h2>
+        </div>
+        <p className="hint">Next 24 hours, 15-minute Belgian signals. Price is wholesale/day-ahead, not your exact tariff.</p>
+      </div>
+      <div className="chart-grid">
+        <ChartPanel title="BE day-ahead price" subtitle="EUR/MWh, wholesale bidding-zone signal">
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" minTickGap={28} />
+              <YAxis width={58} tickFormatter={(value) => `${value}`} />
+              <Tooltip content={<PriceTooltip />} />
+              <Line type="monotone" dataKey="price" name="Price" stroke="#9b4d00" strokeWidth={2} dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartPanel>
+
+        <ChartPanel title="PV and wind forecast" subtitle="Elia Open Data forecasts in MW">
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" minTickGap={28} />
+              <YAxis width={58} tickFormatter={(value) => `${formatNumber(Number(value))}`} />
+              <Tooltip content={<MwTooltip />} />
+              <Legend />
+              <Line type="monotone" dataKey="pv" name="PV" stroke="#d09b00" strokeWidth={2} dot={false} connectNulls />
+              <Line type="monotone" dataKey="wind" name="Wind" stroke="#2477a3" strokeWidth={2} dot={false} connectNulls />
+              <Line type="monotone" dataKey="renewable" name="PV + wind" stroke="#1f7a4f" strokeWidth={2} dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartPanel>
+
+        <ChartPanel title="Belgian load forecast" subtitle="Lower load windows score better in low-load mode">
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="label" minTickGap={28} />
+              <YAxis width={58} tickFormatter={(value) => `${formatNumber(Number(value))}`} />
+              <Tooltip content={<MwTooltip />} />
+              <Line type="monotone" dataKey="load" name="Load" stroke="#344b3f" strokeWidth={2} dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartPanel>
+      </div>
+    </section>
+  );
+}
+
+function ChartPanel({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+  return (
+    <article className="card chart-card">
+      <div className="chart-title">
+        <h3>{title}</h3>
+        <p>{subtitle}</p>
+      </div>
+      {children}
+    </article>
+  );
+}
+
+function PriceTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const value = payload[0].value;
+  const price = typeof value === "number" ? value : null;
+  return (
+    <div className="chart-tooltip">
+      <strong>{label}</strong>
+      <span>{formatPriceShort(price)}</span>
+      {price !== null ? <span>{(price / 1000).toFixed(3)} EUR/kWh equivalent</span> : null}
+    </div>
+  );
+}
+
+function MwTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="chart-tooltip">
+      <strong>{label}</strong>
+      {payload.map((item) => (
+        <span key={`${item.name}-${String(item.dataKey)}`}>{item.name}: {typeof item.value === "number" ? `${formatNumber(item.value)} MW` : "-"}</span>
+      ))}
+    </div>
+  );
+}
+
+function CandidateWindowBars({ windows }: { windows: CandidateWindow[] }) {
+  return (
+    <section className="card candidates-card">
+      <div className="section-heading">
+        <div>
+          <p className="eyebrow mini">Top windows</p>
+          <h2>Score breakdown</h2>
+        </div>
+        <p className="hint">The top five candidate windows ranked by the active optimization mode.</p>
+      </div>
+      <div className="candidate-list">
+        {windows.map((window) => (
+          <article className="candidate-bar" key={`${window.start_brussels}-${window.end_brussels}`}>
+            <div className="candidate-main">
+              <strong>{windowLabel(window)}</strong>
+              <span>{scorePercent(window.score.total)} total</span>
+            </div>
+            <div className="bar-track" aria-label={`Total score ${scorePercent(window.score.total)}`}>
+              <div className="bar-fill" style={{ width: scorePercent(window.score.total) }} />
+            </div>
+            <div className="component-bars">
+              {window.score.price_score !== null ? <ScoreMiniBar label="Price" value={window.score.price_score} /> : null}
+              <ScoreMiniBar label="Renewable" value={window.score.renewable_score} />
+              <ScoreMiniBar label="Low load" value={window.score.low_load_score} />
+              <ScoreMiniBar label="Convenience" value={window.score.convenience_score} />
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ScoreMiniBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="mini-bar">
+      <span>{label}</span>
+      <div><i style={{ width: scorePercent(value) }} /></div>
+      <b>{scorePercent(value)}</b>
+    </div>
+  );
+}
+
 function DataFreshnessList({ freshness }: { freshness: Freshness[] }) {
   if (!freshness.length) return <p className="hint">No source freshness metadata available yet.</p>;
   return (
@@ -519,7 +789,7 @@ function DataSources({ freshness }: { freshness: Freshness[] }) {
   );
 }
 
-function ApplianceImpactSummary({ impact }: { impact: ApplianceImpact }) {
+function ApplianceImpactSummary({ impact, compact = false }: { impact: ApplianceImpact; compact?: boolean }) {
   return (
     <div className="impact-card">
       <strong>{impact.label} impact</strong>
@@ -529,7 +799,7 @@ function ApplianceImpactSummary({ impact }: { impact: ApplianceImpact }) {
         <span>Peak relevance {impact.peak_relevance}</span>
       </div>
       <p>{impact.peak_note}</p>
-      <p className="hint">{impact.capacity_tariff_note}</p>
+      {!compact ? <p className="hint">{impact.capacity_tariff_note}</p> : null}
     </div>
   );
 }
