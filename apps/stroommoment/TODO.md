@@ -44,13 +44,13 @@
 - Completed: add user-facing capacity-tariff explanation to the UI.
 - Add a small chart for load, PV, and wind if it can stay lightweight.
 - Add loading skeletons and better empty/error states.
-- Add source attribution text for Elia Open Data.
-- Add Energy-Charts attribution text in the UI before public release.
+- Completed: add source attribution text for Elia Open Data.
+- Completed: add Energy-Charts attribution text in the UI before public release.
 - Consider switching cache to SQLite if file cache becomes hard to inspect.
 
 ## Product Follow-Up
 
 - Completed: write first user-facing capacity-tariff explanation.
-- Add missing-data and stale-data UI states.
-- Add source attribution and licensing notes.
+- Partial: add missing-data and stale-data UI states; source-level warnings are implemented, broader empty states can improve later.
+- Completed: add source attribution and licensing notes.
 - Test with a few real appliance scenarios.

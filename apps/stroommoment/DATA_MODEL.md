@@ -60,6 +60,28 @@ Important note:
 
 - This is a wholesale/day-ahead bidding-zone signal, not the user's exact supplier tariff.
 
+## SourceFreshness
+
+Represents source attribution and freshness for one upstream data feed.
+
+Fields:
+
+- source id
+- display name
+- source URL
+- fetched timestamp UTC
+- cache expiry timestamp UTC
+- latest source data timestamp UTC
+- latest source data timestamp Europe/Brussels
+- cached flag
+- record count
+- error text when unavailable
+
+Current usage:
+
+- Elia Open Data load, PV, and wind forecast feeds expose dataset links and latest `datetime` values.
+- Energy-Charts price freshness exposes the latest price timestamp and source link.
+
 ## ApplianceProfile
 
 Represents appliance defaults and assumptions.

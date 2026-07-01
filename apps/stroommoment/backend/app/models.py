@@ -7,8 +7,12 @@ from pydantic import BaseModel, Field
 
 class SourceFreshness(BaseModel):
     source: str
+    display_name: str | None = None
+    source_url: str | None = None
     fetched_at_utc: datetime | None = None
     expires_at_utc: datetime | None = None
+    latest_timestamp_utc: datetime | None = None
+    latest_timestamp_brussels: datetime | None = None
     cached: bool = False
     record_count: int = 0
     error: str | None = None

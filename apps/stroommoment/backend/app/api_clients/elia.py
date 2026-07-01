@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -10,6 +12,31 @@ from app.models import SourceFreshness
 from app.services.cache import FileCache
 
 BASE_URL = "https://opendata.elia.be/api/explore/v2.1/catalog/datasets"
+BRUSSELS = ZoneInfo("Europe/Brussels")
+
+ELIA_DATASET_URLS = {
+    "ods002": "https://opendata.elia.be/explore/dataset/ods002/",
+    "ods087": "https://opendata.elia.be/explore/dataset/ods087/",
+    "ods086": "https://opendata.elia.be/explore/dataset/ods086/",
+}
+
+
+def parse_record_timestamp(record: dict[str, Any]) -> datetime | None:
+    raw_timestamp = record.get("datetime")
+    if not raw_timestamp:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(raw_timestamp).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def latest_record_timestamp(records: list[dict[str, Any]]) -> datetime | None:
+    timestamps = [timestamp for record in records if (timestamp := parse_record_timestamp(record)) is not None]
+    return max(timestamps) if timestamps else None
 
 
 @dataclass(frozen=True)
@@ -37,7 +64,14 @@ class EliaClient:
         fetched_at, expires_at = self.cache.set(url, data)
         return data, False, fetched_at, expires_at
 
-    async def fetch_records(self, dataset_id: str, params: dict[str, Any], source_label: str, max_records: int = 500) -> EliaResponse:
+    async def fetch_records(
+        self,
+        dataset_id: str,
+        params: dict[str, Any],
+        source_label: str,
+        display_name: str,
+        max_records: int = 500,
+    ) -> EliaResponse:
         records: list[dict[str, Any]] = []
         fetched_values = []
         expiry_values = []
@@ -59,14 +93,28 @@ class EliaClient:
                 if len(page_records) < page_params["limit"]:
                     break
         except httpx.HTTPError as exc:
-            return EliaResponse(records=[], freshness=SourceFreshness(source=source_label, error=str(exc)))
+            return EliaResponse(
+                records=[],
+                freshness=SourceFreshness(
+                    source=source_label,
+                    display_name=display_name,
+                    source_url=ELIA_DATASET_URLS.get(dataset_id),
+                    error=str(exc),
+                ),
+            )
+
+        latest_timestamp = latest_record_timestamp(records)
 
         return EliaResponse(
             records=records,
             freshness=SourceFreshness(
                 source=source_label,
+                display_name=display_name,
+                source_url=ELIA_DATASET_URLS.get(dataset_id),
                 fetched_at_utc=min(fetched_values) if fetched_values else None,
                 expires_at_utc=min(expiry_values) if expiry_values else None,
+                latest_timestamp_utc=latest_timestamp,
+                latest_timestamp_brussels=latest_timestamp.astimezone(BRUSSELS) if latest_timestamp else None,
                 cached=all_cached,
                 record_count=len(records),
             ),
@@ -80,6 +128,7 @@ class EliaClient:
                 "order_by": "datetime",
             },
             "elia:ods002:load",
+            "Elia Open Data load forecast",
             max_records=500,
         )
 
@@ -92,6 +141,7 @@ class EliaClient:
                 "order_by": "datetime",
             },
             "elia:ods087:pv",
+            "Elia Open Data PV forecast",
             max_records=800,
         )
 
@@ -104,5 +154,6 @@ class EliaClient:
                 "order_by": "datetime",
             },
             "elia:ods086:wind",
+            "Elia Open Data wind forecast",
             max_records=800,
         )

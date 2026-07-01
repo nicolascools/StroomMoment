@@ -6,14 +6,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
 
 type Freshness = {
   source: string;
+  display_name: string | null;
+  source_url: string | null;
   fetched_at_utc: string | null;
   expires_at_utc: string | null;
+  latest_timestamp_utc: string | null;
+  latest_timestamp_brussels: string | null;
   cached: boolean;
   record_count: number;
   error: string | null;
 };
 
 type ForecastPoint = {
+  timestamp_utc: string;
   timestamp_brussels: string;
   load_forecast_mw: number | null;
   pv_forecast_mw: number | null;
@@ -85,6 +90,8 @@ type Recommendation = {
 
 const defaultApplianceId = "dishwasher";
 const modes = ["balanced", "renewable", "low_load", "cheapest"];
+const eliaOpenDataUrl = "https://opendata.elia.be/pages/home/";
+const energyChartsUrl = "https://www.energy-charts.info/charts/price_spot_market/chart.htm?l=en&c=BE";
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-BE", {
@@ -123,6 +130,10 @@ function formatPrice(value: number | null) {
   return `${formatNumber(value, 2)} EUR/MWh (${eurKwh.toFixed(3)} EUR/kWh)`;
 }
 
+function formatOptionalDateTime(value: string | null | undefined) {
+  return value ? formatDateTime(value) : "unknown";
+}
+
 function formatKw(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(value)) return "unknown";
   return `${formatNumber(value, 1)} kW`;
@@ -135,6 +146,24 @@ function formatKwh(value: number | null | undefined) {
 
 function defaultPowerValue(profile: ApplianceProfile) {
   return profile.default_power_kw === null ? "" : String(profile.default_power_kw);
+}
+
+function freshnessStatus(item: Freshness) {
+  if (item.error || item.record_count === 0) return "unavailable";
+  if (item.expires_at_utc && new Date(item.expires_at_utc).getTime() < Date.now()) return "stale";
+  return item.cached ? "cached" : "fresh";
+}
+
+function hasFreshnessWarning(items: Freshness[]) {
+  return items.some((item) => ["stale", "unavailable"].includes(freshnessStatus(item)));
+}
+
+function latestFreshnessTimestamp(items: Freshness[]) {
+  const timestamps = items
+    .map((item) => item.latest_timestamp_brussels ?? item.latest_timestamp_utc)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime());
+  return timestamps[0] ?? null;
 }
 
 export default function Home() {
@@ -237,6 +266,9 @@ export default function Home() {
 
   const currentPoint = signals?.points[0];
   const priceAvailable = signals?.points.some((point) => point.price_eur_mwh !== null) ?? false;
+  const activeFreshness = recommendation?.freshness.length ? recommendation.freshness : signals?.freshness ?? [];
+  const latestDataTimestamp = latestFreshnessTimestamp(activeFreshness);
+  const freshnessWarning = hasFreshnessWarning(activeFreshness);
 
   return (
     <main>
@@ -283,7 +315,9 @@ export default function Home() {
               </div>
             </div>
           ) : null}
-          <p className="hint">Price is a wholesale/day-ahead bidding-zone signal, not your exact supplier tariff.</p>
+          {latestDataTimestamp ? <p className="hint">Latest source timestamp: {formatDateTime(latestDataTimestamp)}.</p> : null}
+          {freshnessWarning ? <p className="warning">Some source data is stale or unavailable. Check Data Freshness below.</p> : null}
+          <p className="hint">Price is a wholesale/day-ahead BE bidding-zone signal, not your exact supplier tariff.</p>
         </article>
 
         <article className="card">
@@ -338,7 +372,7 @@ export default function Home() {
         {selectedProfile ? <p className="hint">{selectedProfile.short_description}</p> : null}
         <p className="hint">Appliance power is used for estimated energy and capacity-tariff context; it does not change the score yet.</p>
         <p className={priceAvailable ? "hint" : "warning"}>{priceAvailable ? "Price data is available for at least part of the planning horizon." : "Price data unavailable; recommendations fall back to renewable/load/convenience scoring."}</p>
-        <p className="hint">Price uses Energy-Charts BE day-ahead wholesale data in EUR/MWh. It is not your exact electricity bill or supplier tariff.</p>
+        <p className="hint">Price uses Energy-Charts BE day-ahead wholesale data in EUR/MWh. Actual cost depends on your contract, supplier markup, taxes, grid fees, VAT, and other billing terms.</p>
         {recommendation?.appliance_impact ? <ApplianceImpactSummary impact={recommendation.appliance_impact} /> : null}
       </section> : null}
 
@@ -351,14 +385,7 @@ export default function Home() {
           </article>
           <article className="card">
             <h2>Data Freshness</h2>
-            <ul className="freshness">
-              {recommendation.freshness.map((item) => (
-                <li key={item.source}>
-                  <strong>{item.source}</strong>
-                  <span>{item.error ? item.error : `${item.record_count} records, ${item.cached ? "cached" : "fresh"}`}</span>
-                </li>
-              ))}
-            </ul>
+            <DataFreshnessList freshness={recommendation.freshness} />
           </article>
         </section>
       ) : null}
@@ -437,7 +464,58 @@ export default function Home() {
           </div>
         </section>
       ) : null}
+
+      {mounted ? <DataSources freshness={activeFreshness} /> : null}
     </main>
+  );
+}
+
+function DataFreshnessList({ freshness }: { freshness: Freshness[] }) {
+  if (!freshness.length) return <p className="hint">No source freshness metadata available yet.</p>;
+  return (
+    <ul className="freshness">
+      {freshness.map((item) => {
+        const status = freshnessStatus(item);
+        const title = item.display_name ?? item.source;
+        return (
+          <li key={item.source}>
+            <div className="freshness-heading">
+              {item.source_url ? <a href={item.source_url} target="_blank" rel="noreferrer">{title}</a> : <strong>{title}</strong>}
+              <span className={`status-pill ${status}`}>{status}</span>
+            </div>
+            <div className="freshness-meta">
+              <span>Fetched {formatOptionalDateTime(item.fetched_at_utc)}</span>
+              <span>Latest data {formatOptionalDateTime(item.latest_timestamp_brussels ?? item.latest_timestamp_utc)}</span>
+              <span>{item.record_count} records</span>
+            </div>
+            {item.error ? <p className="warning">{item.error}</p> : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function DataSources({ freshness }: { freshness: Freshness[] }) {
+  return (
+    <section className="card data-sources">
+      <h2>Data Sources</h2>
+      <div className="source-grid">
+        <div>
+          <strong>Grid and renewable forecasts</strong>
+          <p>
+            Load, PV, and wind forecasts come from <a href={eliaOpenDataUrl} target="_blank" rel="noreferrer">Elia Open Data</a>.
+          </p>
+        </div>
+        <div>
+          <strong>Price signal</strong>
+          <p>
+            Belgian day-ahead prices come from <a href={energyChartsUrl} target="_blank" rel="noreferrer">Energy-Charts</a>. This is a wholesale BE bidding-zone signal, not your exact supplier tariff. Your actual cost depends on contract terms, markup, taxes, grid fees, VAT, and other billing components.
+          </p>
+        </div>
+      </div>
+      <DataFreshnessList freshness={freshness} />
+    </section>
   );
 }
 

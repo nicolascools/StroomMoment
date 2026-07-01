@@ -57,6 +57,14 @@ Implemented API endpoints:
 
 The appliance planner now uses backend profiles for default duration, assumed power, EV charging power options, estimated energy, and capacity-tariff context. Capacity-tariff notes are informational only until live household meter data exists.
 
+## Data Sources and Attribution
+
+- Load, PV, and wind forecasts come from [Elia Open Data](https://opendata.elia.be/pages/home/).
+- Belgian day-ahead price data comes from [Energy-Charts](https://www.energy-charts.info/charts/price_spot_market/chart.htm?l=en&c=BE).
+- Price is a wholesale/day-ahead BE bidding-zone signal, not the user's exact supplier tariff.
+- Actual electricity cost depends on the user's contract, supplier markup, taxes, grid fees, VAT, and other billing components.
+- API responses expose per-source freshness metadata including fetch time, latest source timestamp, cache status, record count, source URL, and errors when a source is unavailable.
+
 ## Run Locally
 
 Backend:

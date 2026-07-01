@@ -13,6 +13,9 @@ from app.services.cache import FileCache
 
 BRUSSELS = ZoneInfo("Europe/Brussels")
 BASE_URL = "https://api.energy-charts.info/price"
+SOURCE = "energy-charts:price:BE"
+DISPLAY_NAME = "Energy-Charts BE day-ahead price"
+SOURCE_URL = "https://www.energy-charts.info/charts/price_spot_market/chart.htm?l=en&c=BE"
 
 
 def parse_energy_charts_prices(
@@ -41,6 +44,33 @@ def parse_energy_charts_prices(
     return points
 
 
+def latest_price_timestamp(prices: list[PricePoint]) -> datetime | None:
+    timestamps = [price.timestamp_utc for price in prices]
+    return max(timestamps) if timestamps else None
+
+
+def build_energy_charts_freshness(
+    prices: list[PricePoint],
+    fetched_at_utc: datetime | None,
+    expires_at_utc: datetime | None,
+    cached: bool = False,
+    error: str | None = None,
+) -> SourceFreshness:
+    latest_timestamp = latest_price_timestamp(prices)
+    return SourceFreshness(
+        source=SOURCE,
+        display_name=DISPLAY_NAME,
+        source_url=SOURCE_URL,
+        fetched_at_utc=fetched_at_utc,
+        expires_at_utc=expires_at_utc,
+        latest_timestamp_utc=latest_timestamp,
+        latest_timestamp_brussels=latest_timestamp.astimezone(BRUSSELS) if latest_timestamp else None,
+        cached=cached,
+        record_count=len(prices),
+        error=error,
+    )
+
+
 class EnergyChartsClient:
     def __init__(self, cache: FileCache | None = None, timeout_seconds: float = 20.0) -> None:
         self.cache = cache or FileCache(ttl_seconds=15 * 60)
@@ -52,48 +82,24 @@ class EnergyChartsClient:
         cached_data, fetched_at, expires_at = self.cache.get(url)
         if cached_data is not None:
             if cached_data.get("_missing_error"):
-                return [], SourceFreshness(
-                    source="energy-charts:price:BE",
-                    fetched_at_utc=fetched_at,
-                    expires_at_utc=expires_at,
-                    cached=True,
-                    record_count=0,
-                    error=str(cached_data["_missing_error"]),
-                ), True
+                return [], build_energy_charts_freshness([], fetched_at, expires_at, cached=True, error=str(cached_data["_missing_error"])), True
             points = parse_energy_charts_prices(cached_data, fetched_at_utc=fetched_at)
-            return points, SourceFreshness(
-                source="energy-charts:price:BE",
-                fetched_at_utc=fetched_at,
-                expires_at_utc=expires_at,
-                cached=True,
-                record_count=len(points),
-            ), True
+            return points, build_energy_charts_freshness(points, fetched_at, expires_at, cached=True), True
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
                 response = await client.get(url)
                 if response.status_code == 404:
                     fetched_at, expires_at = self.cache.set(url, {"_missing_error": f"Price data unavailable for {day.isoformat()}"})
-                    return [], SourceFreshness(
-                        source="energy-charts:price:BE",
-                        fetched_at_utc=fetched_at,
-                        expires_at_utc=expires_at,
-                        error=f"Price data unavailable for {day.isoformat()}",
-                    ), False
+                    return [], build_energy_charts_freshness([], fetched_at, expires_at, error=f"Price data unavailable for {day.isoformat()}"), False
                 response.raise_for_status()
                 data = response.json()
         except httpx.HTTPError as exc:
-            return [], SourceFreshness(source="energy-charts:price:BE", error=str(exc)), False
+            return [], build_energy_charts_freshness([], None, None, error=str(exc)), False
 
         fetched_at, expires_at = self.cache.set(url, data)
         points = parse_energy_charts_prices(data, fetched_at_utc=fetched_at)
-        return points, SourceFreshness(
-            source="energy-charts:price:BE",
-            fetched_at_utc=fetched_at,
-            expires_at_utc=expires_at,
-            cached=False,
-            record_count=len(points),
-        ), False
+        return points, build_energy_charts_freshness(points, fetched_at, expires_at), False
 
     async def fetch_prices(self, start_date: date, end_date: date) -> PriceResponse:
         prices: list[PricePoint] = []
@@ -113,12 +119,11 @@ class EnergyChartsClient:
 
         return PriceResponse(
             prices=sorted(prices, key=lambda point: point.timestamp_utc),
-            freshness=SourceFreshness(
-                source="energy-charts:price:BE",
-                fetched_at_utc=min(fetched_values) if fetched_values else None,
-                expires_at_utc=min(expiry_values) if expiry_values else None,
+            freshness=build_energy_charts_freshness(
+                prices,
+                min(fetched_values) if fetched_values else None,
+                min(expiry_values) if expiry_values else None,
                 cached=cached,
-                record_count=len(prices),
                 error=error,
             ),
         )

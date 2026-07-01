@@ -8,6 +8,7 @@
   --accent-2: #ffe08a;
   --line: #ddd5c2;
   --danger: #9e2f2f;
+  --warning-bg: #fff4d5;
 }
 
 * {
@@ -157,6 +158,17 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.warning {
+  color: var(--danger);
+}
+
+a {
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
 .error {
   background: #fff0ee;
   border: 1px solid #e0a29a;
@@ -188,6 +200,69 @@ button:disabled {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.freshness-heading {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.freshness-heading strong,
+.freshness-heading a {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.freshness-meta {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.status-pill {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  text-transform: uppercase;
+}
+
+.status-pill.fresh {
+  background: #dff3e8;
+  color: #135f3a;
+}
+
+.status-pill.cached {
+  background: var(--accent-2);
+  color: #5a4300;
+}
+
+.status-pill.stale,
+.status-pill.unavailable {
+  background: var(--warning-bg);
+  color: var(--danger);
+}
+
+.source-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.source-grid div {
+  background: #f7f3e8;
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.source-grid p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 8px 0 0;
 }
 
 .impact-card {
@@ -233,7 +308,8 @@ th {
 @media (max-width: 860px) {
   .two,
   .planner,
-  .metrics {
+  .metrics,
+  .source-grid {
     grid-template-columns: 1fr;
   }
 

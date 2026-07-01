@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC
 
+from app.api_clients.elia import latest_record_timestamp
 from app.services.normalization import aggregate_wind_by_timestamp, normalize_forecast_points, parse_elia_datetime
 
 
@@ -39,3 +40,16 @@ def test_normalize_forecast_points_aligns_load_pv_and_wind() -> None:
     assert points[0].renewable_forecast_mw == 300
     assert points[0].renewable_share_of_load == 0.3
     assert points[0].timestamp_brussels.isoformat() == "2026-07-01T14:45:00+02:00"
+
+
+def test_latest_record_timestamp_uses_latest_elia_datetime() -> None:
+    records = [
+        {"datetime": "2026-07-01T12:45:00+00:00"},
+        {"datetime": "2026-07-01T13:15:00+00:00"},
+        {"datetime": None},
+    ]
+
+    latest = latest_record_timestamp(records)
+
+    assert latest is not None
+    assert latest.isoformat() == "2026-07-01T13:15:00+00:00"

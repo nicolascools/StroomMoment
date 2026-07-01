@@ -108,7 +108,7 @@ These weights are implemented in `backend/app/scoring/weights.py`.
 
 CO2 is intentionally omitted from current scoring because no reliable current/forecast CO2 source has been validated.
 
-Price is a wholesale/day-ahead bidding-zone signal for BE. It is not the user's exact supplier tariff or total electricity bill price.
+Price is a wholesale/day-ahead bidding-zone signal for BE. It is not the user's exact supplier tariff or total electricity bill price. Actual cost depends on contract terms, supplier markup, taxes, grid fees, VAT, and other billing components.
 
 Appliance profiles currently affect duration defaults, estimated energy, explanation text, and capacity-tariff guidance. They do not change score weights yet.
 
