@@ -182,7 +182,12 @@ Initial screens:
 - recommendation result
 - data/nerd view
 
-Current implementation: one Next.js page includes all initial UI sections. Charts are deferred.
+Current implementation: one Next.js page includes all initial UI sections. Recharts renders client-side charts for price, PV/wind, load, and top candidate score breakdowns using already-normalized API data.
+
+Charting choice:
+
+- Recharts is used because it is common in React apps, lightweight enough for the PoC, works with responsive containers, and avoids custom SVG chart code for the first public UX slice.
+- Charts are rendered only from client-loaded state in the existing mounted shell to avoid current-time or browser-only hydration mismatches.
 
 ### Future MQTT/Home Assistant Integration
 

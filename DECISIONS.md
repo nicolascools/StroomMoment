@@ -109,3 +109,9 @@ Rationale: The app currently does not need personal user data. Future accounts m
 Decision: Use a persistent host-mounted file cache for the backend on the public PoC.
 
 Rationale: File cache is enough for the current public source data and keeps operations simple. SQLite, PostgreSQL, TimescaleDB, and InfluxDB remain future options if historical storage, querying, or user-specific data become important.
+
+## 2026-07-01: Recharts for Public PoC Charts
+
+Decision: Use Recharts for the first public PoC charting slice in the Next.js frontend.
+
+Rationale: Recharts is a common React charting library, supports responsive line charts without custom SVG code, and is sufficient for price, PV/wind, load, and candidate score visualizations. Charts use already-normalized backend API responses and do not introduce browser-side external data calls.

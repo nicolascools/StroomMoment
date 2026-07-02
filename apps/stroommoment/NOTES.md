@@ -37,12 +37,14 @@ Freeform research notes for StroomMoment.
 - Appliance profiles are implemented in `backend/app/scoring/appliances.py` and exposed through `GET /api/appliances`.
 - Recommendation requests accept `appliance_id` and optional `power_kw`; the backend returns `appliance` and `appliance_impact` with estimated kWh and capacity-tariff guidance.
 - Appliance impact is informational only and does not alter the scoring weights.
+- Public PoC charts use Recharts in the frontend only. They render from existing `/api/signals` and `/api/recommendations` data and do not add browser-side external API calls.
 
 ## Frontend Stability Notes
 
 - Hydration issue fixed on 2026-07-01: the planner default deadline was computed with `new Date()` during the initial render of a client component. Next.js still pre-renders client components on the server, so the server HTML and first client render could diverge around current-date/default-form state and loading/disabled attributes.
 - Fix: the initial render now uses a deterministic stable shell. Brussels-local default deadline calculation and initial data loading run after mount in `useEffect`.
 - Rule: do not compute current-time-dependent form defaults, locale-sensitive dates, browser-only state, or API-loaded interactive states during initial render. Initialize them after mount or pass them as serialized server data.
+- Chart rendering follows the same rule: charts are shown only after the mounted shell has loaded API data, so Recharts does not introduce server/client markup divergence.
 
 ## Product Notes
 

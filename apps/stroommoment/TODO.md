@@ -42,7 +42,7 @@
 - Completed: add price fields to signals, recommendations, and nerd table.
 - Completed: add appliance-specific default durations and assumed power values.
 - Completed: add user-facing capacity-tariff explanation to the UI.
-- Add a small chart for load, PV, and wind if it can stay lightweight.
+- Completed: add lightweight Recharts panels for price, PV/wind, load, and top candidate score breakdowns.
 - Add loading skeletons and better empty/error states.
 - Completed: add source attribution text for Elia Open Data.
 - Completed: add Energy-Charts attribution text in the UI before public release.
@@ -54,6 +54,7 @@
 - Partial: add missing-data and stale-data UI states; source-level warnings are implemented, broader empty states can improve later.
 - Completed: add source attribution and licensing notes.
 - Test with a few real appliance scenarios.
+- Add real tester feedback destination when the public PoC audience is known.
 
 ## Public PoC Deployment Follow-Up
 

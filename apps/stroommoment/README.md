@@ -39,7 +39,7 @@ StroomMoment should turn Belgian grid and energy signals into simple recommendat
 The first working slice now exists under this directory:
 
 - `backend/`: FastAPI API for Elia fetching, file caching, normalization, scoring, and recommendations
-- `frontend/`: Next.js UI with status page, appliance planner, recommendation output, and data table
+- `frontend/`: Next.js UI with status page, appliance planner, recommendation output, Recharts signal charts, and data table
 - `docker-compose.yml`: optional local orchestration for backend and frontend
 
 Implemented data path:
@@ -56,6 +56,8 @@ Implemented API endpoints:
 - `GET /api/recommendations?appliance_id=dishwasher&duration_minutes=120&power_kw=1.2&deadline=2026-07-02T07:00&mode=balanced`
 
 The appliance planner now uses backend profiles for default duration, assumed power, EV charging power options, estimated energy, and capacity-tariff context. Capacity-tariff notes are informational only until live household meter data exists.
+
+The public PoC UI includes Recharts-based charts for Belgian day-ahead price, PV/wind forecasts, Belgian load forecast, and a top-candidate score breakdown. Charts use the existing `/api/signals` and `/api/recommendations` responses; no extra external browser calls are made.
 
 ## Data Sources and Attribution
 
@@ -90,6 +92,11 @@ npm run dev
 ```
 
 Open `http://localhost:3000` with the backend running on `http://localhost:8000`.
+
+Optional frontend config:
+
+- `NEXT_PUBLIC_API_BASE_URL`: set to `http://localhost:8000` for direct local dev, leave blank for same-origin `/api` routing in the Compose/public PoC setup.
+- `NEXT_PUBLIC_FEEDBACK_URL`: optional tester feedback link; blank shows placeholder text.
 
 Optional Docker Compose:
 
