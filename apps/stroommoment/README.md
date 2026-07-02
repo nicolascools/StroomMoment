@@ -96,7 +96,12 @@ Open `http://localhost:3000` with the backend running on `http://localhost:8000`
 Optional frontend config:
 
 - `NEXT_PUBLIC_API_BASE_URL`: set to `http://localhost:8000` for direct local dev, leave blank for same-origin `/api` routing in the Compose/public PoC setup.
-- `NEXT_PUBLIC_FEEDBACK_URL`: optional tester feedback link; blank shows placeholder text.
+- `NEXT_PUBLIC_FEEDBACK_URL`: optional tester feedback link; blank shows placeholder text. Good first options are a Tally form, Google Form, GitHub issue link, or `mailto:` link.
+
+Public metadata:
+
+- The frontend defines title, description, Open Graph, Twitter card metadata, theme color, favicon, app icon, Apple touch icon, and `robots.txt`.
+- `robots.txt` currently allows indexing because this is an intentionally public PoC.
 
 Optional Docker Compose:
 

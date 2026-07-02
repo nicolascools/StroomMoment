@@ -65,6 +65,15 @@ cd /opt/stroommoment
 
 Current state: no Git remote is configured yet. Until a remote exists, use a temporary manual copy from the workstation or create a simple private remote.
 
+If `/opt/stroommoment` reports that it is ahead of `bundle-origin`, that usually means the host was cloned or updated from a temporary Git bundle and then received local commits that do not exist on a durable shared remote. This is acceptable for a short-lived PoC handoff, but it should not become the long-term source of truth.
+
+Future deployment hygiene:
+
+- create a proper Git remote, such as GitHub or self-hosted Gitea
+- push from the Windows development repo to that remote
+- pull on `stroommoment-01` from that remote
+- stop relying on bundle/manual transfer once the remote exists
+
 Temporary manual copy example from Windows:
 
 ```powershell
@@ -95,12 +104,14 @@ NEXT_PUBLIC_API_BASE_URL=
 STROOMMOMENT_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://poc.coolsnet.com
 STROOMMOMENT_CACHE_HOST_PATH=/var/lib/stroommoment/cache
 STROOMMOMENT_HTTP_PORT=8080
+NEXT_PUBLIC_FEEDBACK_URL=
 ```
 
 Notes:
 
 - `NEXT_PUBLIC_API_BASE_URL` should stay blank for public Docker deployment so browser calls use same-origin `/api` routes.
 - Direct local frontend development can use `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`.
+- `NEXT_PUBLIC_FEEDBACK_URL` can point to a Tally form, Google Form, GitHub issue link, or `mailto:` link. Leave it blank to show placeholder text.
 - No API tokens or secrets are required for the current public data sources.
 - Do not commit real `.env` files.
 

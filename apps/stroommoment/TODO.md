@@ -55,6 +55,7 @@
 - Completed: add source attribution and licensing notes.
 - Test with a few real appliance scenarios.
 - Add real tester feedback destination when the public PoC audience is known.
+- Completed: add public favicon/icon metadata and robots.txt.
 
 ## Public PoC Deployment Follow-Up
 
@@ -62,5 +63,6 @@
 - Completed: keep the public PoC stateless with no accounts, no authentication, and no user database.
 - Completed: keep persistent backend cache as a file cache for now.
 - Create a real Git remote before relying on `git pull` deployment.
+- Replace temporary bundle/manual deployment with a proper Git remote workflow.
 - Consider SQLite, PostgreSQL, TimescaleDB, or InfluxDB only after the PoC shows a concrete need for history, analytics, or user-specific state.
 - Consider CI/CD later with GitHub/Gitea and versioned Docker images.
