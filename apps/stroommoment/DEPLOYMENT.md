@@ -55,24 +55,71 @@ sudo systemctl enable --now docker qemu-guest-agent
 
 Log out and back in after adding `nicolas` to the `docker` group, or use `sudo docker` for the first session.
 
-## Clone Or Copy Method
+## Git Remote Workflow
 
-Preferred later method is Git pull from a real remote:
+The source-of-truth remote is GitHub:
+
+```text
+https://github.com/nicolascools/StroomMoment
+```
+
+Local Windows development should push to `origin/master`:
+
+```powershell
+cd C:\Projects\StroomMoment
+git status
+git add .
+git commit -m "Describe the change"
+git push
+```
+
+The deployment host should pull from the same remote and rebuild the Compose stack:
 
 ```bash
 cd /opt/stroommoment
+git status
+git pull --ff-only
+docker compose -f apps/stroommoment/docker-compose.yml up -d --build
 ```
 
-Current state: no Git remote is configured yet. Until a remote exists, use a temporary manual copy from the workstation or create a simple private remote.
+### One-Time Deployment Host Remote Setup
 
-If `/opt/stroommoment` reports that it is ahead of `bundle-origin`, that usually means the host was cloned or updated from a temporary Git bundle and then received local commits that do not exist on a durable shared remote. This is acceptable for a short-lived PoC handoff, but it should not become the long-term source of truth.
+If `/opt/stroommoment` still points at `bundle-origin`, replace it with the GitHub remote.
 
-Future deployment hygiene:
+If the GitHub repository is private, create a read-only GitHub deploy key from `stroommoment-01` first:
 
-- create a proper Git remote, such as GitHub or self-hosted Gitea
-- push from the Windows development repo to that remote
-- pull on `stroommoment-01` from that remote
-- stop relying on bundle/manual transfer once the remote exists
+```bash
+ssh-keygen -t ed25519 -C "stroommoment-01 StroomMoment deploy key"
+cat ~/.ssh/id_ed25519.pub
+```
+
+Add the printed public key to the GitHub repository deploy keys, then configure the repo:
+
+```bash
+cd /opt/stroommoment
+git status
+git rev-parse HEAD
+git remote remove bundle-origin || true
+git remote add origin git@github.com:nicolascools/StroomMoment.git
+git fetch origin
+git branch --set-upstream-to=origin/master master
+git pull --ff-only
+git status
+git remote -v
+git branch -vv
+```
+
+If the GitHub repository is public and no deploy key is desired, HTTPS read-only pull can be used instead:
+
+```bash
+git remote add origin https://github.com/nicolascools/StroomMoment.git
+```
+
+If `/opt/stroommoment` reports that it is ahead of `bundle-origin`, that means the host was cloned or updated from a temporary Git bundle and then received local commits that do not exist on a durable shared remote. Once the GitHub remote is configured and `git pull --ff-only` is clean, `bundle-origin` can be removed and manual bundle transfer should stop being the normal workflow.
+
+### Emergency Manual Bundle Fallback
+
+Use bundles only if GitHub or SSH deploy keys are unavailable.
 
 Temporary manual copy example from Windows:
 
@@ -82,7 +129,7 @@ scp C:\Users\$env:USERNAME\AppData\Local\Temp\stroommoment.bundle nicolas@192.16
 ssh nicolas@192.168.1.47 "sudo mkdir -p /opt/stroommoment && sudo chown nicolas:nicolas /opt/stroommoment && git clone /tmp/stroommoment.bundle /opt/stroommoment"
 ```
 
-If `/opt/stroommoment` already exists:
+If `/opt/stroommoment` already exists and has no usable remote:
 
 ```bash
 cd /opt/stroommoment
@@ -145,13 +192,15 @@ Local development:
 cd C:\Projects\StroomMoment
 ```
 
-On the app host after a real remote exists:
+On the app host:
 
 ```bash
 cd /opt/stroommoment
+git pull --ff-only
+docker compose -f apps/stroommoment/docker-compose.yml up -d --build
 ```
 
-If no remote exists, replace `git pull` with the temporary bundle/copy process above.
+If GitHub is unavailable, use the emergency bundle/copy fallback above.
 
 ## Rollback Procedure
 

@@ -44,3 +44,19 @@ npm run build
 ## Git Hygiene
 
 Generated files, dependency folders, local caches, virtual environments, build outputs, logs, and real `.env` files are ignored. Keep source, docs, lockfiles, Docker files, tests, and `.env.example` files tracked.
+
+## Git Remote Workflow
+
+The source-of-truth remote is `https://github.com/nicolascools/StroomMoment`.
+
+Normal local flow:
+
+```powershell
+cd C:\Projects\StroomMoment
+git status
+git add .
+git commit -m "Describe the change"
+git push
+```
+
+The public PoC host should deploy by pulling from the same remote and rebuilding Docker Compose. Manual Git bundles are only an emergency fallback.

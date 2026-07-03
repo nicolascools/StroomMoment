@@ -40,6 +40,8 @@ When adding or changing behavior:
 - Keep `.env.example` files current when new configuration variables are introduced.
 - Before committing, inspect `git status`, `git diff`, and recent log entries; stage only intended source, docs, config, lockfiles, and tests.
 - Run relevant backend tests and frontend builds for touched apps before committing when practical.
+- Push normal work to `origin/master` on `https://github.com/nicolascools/StroomMoment` when explicitly asked to publish or deploy.
+- Public PoC deployment should pull from the GitHub remote on `stroommoment-01`; do not use manual Git bundles except as an emergency fallback.
 
 ## MVP Bias
 

@@ -69,7 +69,8 @@ Freeform research notes for StroomMoment.
 - Public PoC target is `https://poc.coolsnet.com`.
 - The public Compose deployment uses a small Caddy router so the browser can call same-origin `/api/...` and the backend service is not directly exposed.
 - The previous wall-screen PoC on `poc.coolsnet.com` can be removed or bypassed when StroomMoment is live.
-- No Git remote exists yet; first deployment may use a temporary Git bundle/manual copy, but Git pull deployment is preferred once a remote exists.
-- If `/opt/stroommoment` says it is ahead of `bundle-origin`, that means the deployment host was seeded from a temporary bundle remote and now has local commits not represented by a durable shared remote. It is not automatically broken, but it should be replaced with a real GitHub/Gitea remote before deployment becomes routine.
+- GitHub remote now exists at `https://github.com/nicolascools/StroomMoment`. The local Windows repo uses this as `origin`.
+- If `/opt/stroommoment` says it is ahead of `bundle-origin`, that means the deployment host was seeded from a temporary bundle remote and now has local commits not represented by a durable shared remote. Replace `bundle-origin` with the GitHub remote and use `git pull --ff-only` before Compose rebuilds.
+- This session could not configure the deployed repo directly because non-interactive SSH auth to `nicolas@192.168.1.47` failed. Configure it from an authenticated shell on `stroommoment-01`.
 - Public PoC metadata now includes favicon/app icons and `robots.txt`. Robots currently allow indexing because the site is already intentionally public.
 - Persistent file cache is enough for the PoC. Keep SQLite, PostgreSQL, TimescaleDB, and InfluxDB open for later discussion.

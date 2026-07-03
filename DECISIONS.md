@@ -115,3 +115,9 @@ Rationale: File cache is enough for the current public source data and keeps ope
 Decision: Use Recharts for the first public PoC charting slice in the Next.js frontend.
 
 Rationale: Recharts is a common React charting library, supports responsive line charts without custom SVG code, and is sufficient for price, PV/wind, load, and candidate score visualizations. Charts use already-normalized backend API responses and do not introduce browser-side external data calls.
+
+## 2026-07-03: GitHub Is the Source-of-Truth Remote
+
+Decision: Use `https://github.com/nicolascools/StroomMoment` as the source-of-truth Git remote for StroomMoment.
+
+Rationale: The manual bundle workflow successfully bootstrapped the public PoC but leaves the deployed repo ahead of a stale `bundle-origin` remote. A GitHub remote gives the Windows development repo and Proxmox deployment host a shared source of truth. Manual bundles remain an emergency fallback only.
