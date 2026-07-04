@@ -14,6 +14,10 @@ from app.services.cache import FileCache
 BASE_URL = "https://opendata.elia.be/api/explore/v2.1/catalog/datasets"
 BRUSSELS = ZoneInfo("Europe/Brussels")
 
+# Short negative-cache window so an Elia outage does not trigger a full upstream
+# fetch fan-out for every incoming request.
+FAILURE_TTL_SECONDS = 90
+
 ELIA_DATASET_URLS = {
     "ods002": "https://opendata.elia.be/explore/dataset/ods002/",
     "ods087": "https://opendata.elia.be/explore/dataset/ods087/",
@@ -77,6 +81,20 @@ class EliaClient:
         expiry_values = []
         all_cached = True
 
+        failure_key = f"elia:failure:{dataset_id}"
+        cached_failure, _, _ = self.cache.get(failure_key)
+        if cached_failure is not None:
+            return EliaResponse(
+                records=[],
+                freshness=SourceFreshness(
+                    source=source_label,
+                    display_name=display_name,
+                    source_url=ELIA_DATASET_URLS.get(dataset_id),
+                    cached=True,
+                    error=str(cached_failure.get("error", "Recent Elia request failure; retrying shortly.")),
+                ),
+            )
+
         try:
             for offset in range(0, max_records, 100):
                 page_params = dict(params)
@@ -93,13 +111,17 @@ class EliaClient:
                 if len(page_records) < page_params["limit"]:
                     break
         except httpx.HTTPError as exc:
+            # Keep upstream details out of the public payload; the exception class
+            # is enough for freshness transparency without leaking URLs/internals.
+            error_message = f"Elia request failed ({type(exc).__name__}); retrying after a short cooldown."
+            self.cache.set(failure_key, {"error": error_message}, ttl_seconds=FAILURE_TTL_SECONDS)
             return EliaResponse(
                 records=[],
                 freshness=SourceFreshness(
                     source=source_label,
                     display_name=display_name,
                     source_url=ELIA_DATASET_URLS.get(dataset_id),
-                    error=str(exc),
+                    error=error_message,
                 ),
             )
 

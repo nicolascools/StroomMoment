@@ -156,6 +156,9 @@ def build_recommendation(
 
     scored = [score_window(window, windows, deadline, mode, appliance_impact) for window in windows]
     scored.sort(key=lambda candidate: candidate.score.total, reverse=True)
+    # Only surface avoid-windows when there are enough candidates that the worst
+    # three cannot overlap the recommended top five.
+    avoid_windows = scored[:-4:-1] if len(scored) >= 8 else []
     return Recommendation(
         duration_minutes=duration_minutes,
         deadline_brussels=deadline.astimezone(BRUSSELS) if deadline.tzinfo else deadline.replace(tzinfo=BRUSSELS),
@@ -164,6 +167,7 @@ def build_recommendation(
         appliance_impact=appliance_impact,
         best_window=scored[0],
         top_windows=scored[:5],
+        avoid_windows=avoid_windows,
         freshness=freshness,
         warnings=warnings,
     )

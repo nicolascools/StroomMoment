@@ -33,9 +33,10 @@ class FileCache:
         except (OSError, KeyError, ValueError, json.JSONDecodeError):
             return None, None, None
 
-    def set(self, key: str, data: dict[str, Any]) -> tuple[datetime, datetime]:
+    def set(self, key: str, data: dict[str, Any], ttl_seconds: int | None = None) -> tuple[datetime, datetime]:
         fetched_at = datetime.now(UTC)
-        expires_at = fetched_at + self.ttl
+        ttl = timedelta(seconds=ttl_seconds) if ttl_seconds is not None else self.ttl
+        expires_at = fetched_at + ttl
         payload = {
             "fetched_at_utc": fetched_at.isoformat(),
             "expires_at_utc": expires_at.isoformat(),

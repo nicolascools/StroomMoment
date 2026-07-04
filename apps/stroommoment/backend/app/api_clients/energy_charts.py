@@ -95,7 +95,7 @@ class EnergyChartsClient:
                 response.raise_for_status()
                 data = response.json()
         except httpx.HTTPError as exc:
-            return [], build_energy_charts_freshness([], None, None, error=str(exc)), False
+            return [], build_energy_charts_freshness([], None, None, error=f"Price request failed ({type(exc).__name__})."), False
 
         fetched_at, expires_at = self.cache.set(url, data)
         points = parse_energy_charts_prices(data, fetched_at_utc=fetched_at)

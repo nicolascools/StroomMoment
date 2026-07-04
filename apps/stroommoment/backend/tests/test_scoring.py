@@ -95,6 +95,32 @@ def test_cheapest_mode_prioritizes_price() -> None:
     assert recommendation.best_window.score.weights["price_score"] == 0.85
 
 
+def test_avoid_windows_listed_when_enough_candidates() -> None:
+    points = [make_point(index, 1000 + index * 25, 500 - index * 20) for index in range(16)]
+    deadline = datetime(2026, 7, 1, 16, 0, tzinfo=BRUSSELS)
+
+    recommendation = build_recommendation(points, 30, deadline, "balanced", [])
+
+    assert len(recommendation.avoid_windows) == 3
+    # Worst window first, and no overlap with the recommended top windows.
+    avoid_totals = [window.score.total for window in recommendation.avoid_windows]
+    assert avoid_totals == sorted(avoid_totals)
+    top_starts = {window.start_utc for window in recommendation.top_windows}
+    avoid_starts = {window.start_utc for window in recommendation.avoid_windows}
+    assert top_starts.isdisjoint(avoid_starts)
+    assert recommendation.best_window is not None
+    assert recommendation.avoid_windows[0].score.total <= recommendation.best_window.score.total
+
+
+def test_avoid_windows_empty_with_few_candidates() -> None:
+    points = [make_point(index, 1000, 100) for index in range(4)]
+    deadline = datetime(2026, 7, 1, 13, 0, tzinfo=BRUSSELS)
+
+    recommendation = build_recommendation(points, 30, deadline, "balanced", [])
+
+    assert recommendation.avoid_windows == []
+
+
 def test_cheapest_mode_falls_back_without_price_data() -> None:
     points = [make_point(index, 1000, 100) for index in range(4)]
     deadline = datetime(2026, 7, 1, 13, 0, tzinfo=BRUSSELS)

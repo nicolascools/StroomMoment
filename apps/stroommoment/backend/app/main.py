@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+import logging
 import os
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Query
@@ -14,6 +15,9 @@ from app.scoring.windows import build_recommendation
 
 BRUSSELS = ZoneInfo("Europe/Brussels")
 DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000,https://poc.coolsnet.com"
+UPSTREAM_ERROR_DETAIL = "Upstream energy data is temporarily unavailable. Please try again shortly."
+
+logger = logging.getLogger("stroommoment.api")
 
 
 def cors_origins() -> list[str]:
@@ -42,8 +46,9 @@ async def health() -> dict[str, str]:
 async def get_signals(hours: int = Query(default=48, ge=1, le=168)) -> dict:
     try:
         snapshot = await signal_service.get_signals(hours=hours)
-    except Exception as exc:  # pragma: no cover - final API safety net
-        raise HTTPException(status_code=502, detail=f"Unable to fetch Elia data: {exc}") from exc
+    except Exception:
+        logger.exception("Failed to build signal snapshot")
+        raise HTTPException(status_code=502, detail=UPSTREAM_ERROR_DETAIL)
     return snapshot.model_dump(mode="json")
 
 
@@ -72,8 +77,9 @@ async def get_recommendations(
 
     try:
         snapshot = await signal_service.get_signals(hours=72)
-    except Exception as exc:  # pragma: no cover - final API safety net
-        raise HTTPException(status_code=502, detail=f"Unable to fetch Elia data: {exc}") from exc
+    except Exception:
+        logger.exception("Failed to build signal snapshot for recommendation")
+        raise HTTPException(status_code=502, detail=UPSTREAM_ERROR_DETAIL)
 
     recommendation = build_recommendation(
         points=snapshot.points,

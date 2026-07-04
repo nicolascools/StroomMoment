@@ -102,5 +102,6 @@ class Recommendation(BaseModel):
     appliance_impact: ApplianceImpact | None = None
     best_window: CandidateWindow | None
     top_windows: list[CandidateWindow]
+    avoid_windows: list[CandidateWindow] = Field(default_factory=list)
     freshness: list[SourceFreshness]
     warnings: list[str] = Field(default_factory=list)
