@@ -38,6 +38,11 @@ Freeform research notes for StroomMoment.
 - Recommendation requests accept `appliance_id` and optional `power_kw`; the backend returns `appliance` and `appliance_impact` with estimated kWh and capacity-tariff guidance.
 - Appliance impact is informational only and does not alter the scoring weights.
 - Public PoC charts use Recharts in the frontend only. They render from existing `/api/signals` and `/api/recommendations` data and do not add browser-side external API calls.
+- Public 502 responses use a generic detail message; raw exception text is logged server-side only. Freshness `error` strings contain the exception class name, never URLs or internals.
+- Elia failures are negative-cached under `elia:failure:<dataset>` for 90 s (`FAILURE_TTL_SECONDS`) so outages do not hammer upstream. Energy-Charts already negative-caches missing future days.
+- The recommendation payload includes `avoid_windows` (worst three feasible windows, only with >= 8 candidates).
+- Planner preferences (appliance, mode, duration, power) persist in `localStorage` under `stroommoment.planner.v1`; loaded after mount, so hydration stays deterministic.
+- Frontend is split into `app/components/` and `app/lib/`; the canonical peak/kwartierpiek note renders once (`ApplianceImpactCard`), and the full price disclaimer lives only in the Data Sources section with the Energy-Charts CC BY 4.0 attribution.
 
 ## Frontend Stability Notes
 

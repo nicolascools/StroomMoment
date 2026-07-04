@@ -141,7 +141,7 @@ Fields:
 - best balanced window
 - greenest window
 - cheapest window if available
-- avoid windows
+- avoid windows (implemented: the three weakest feasible windows, present only when at least eight candidates exist)
 - candidate window table
 - source freshness summary
 - warnings or missing-data notes

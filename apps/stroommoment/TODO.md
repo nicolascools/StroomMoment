@@ -43,7 +43,11 @@
 - Completed: add appliance-specific default durations and assumed power values.
 - Completed: add user-facing capacity-tariff explanation to the UI.
 - Completed: add lightweight Recharts panels for price, PV/wind, load, and top candidate score breakdowns.
-- Add loading skeletons and better empty/error states.
+- Completed: add loading skeletons and better empty/error states.
+- Completed: sanitize public API errors and negative-cache Elia failures.
+- Completed: add avoid-windows output and relative-score copy.
+- Completed: client-only saved planner preferences via localStorage.
+- Deferred: backend container non-root user; verify cache-mount ownership on the host first (see DESIGN_NOTES.md).
 - Completed: add source attribution text for Elia Open Data.
 - Completed: add Energy-Charts attribution text in the UI before public release.
 - Consider switching cache to SQLite if file cache becomes hard to inspect.
@@ -51,7 +55,7 @@
 ## Product Follow-Up
 
 - Completed: write first user-facing capacity-tariff explanation.
-- Partial: add missing-data and stale-data UI states; source-level warnings are implemented, broader empty states can improve later.
+- Completed: add missing-data and stale-data UI states, skeletons, and no-feasible-window guidance.
 - Completed: add source attribution and licensing notes.
 - Test with a few real appliance scenarios.
 - Add real tester feedback destination when the public PoC audience is known.

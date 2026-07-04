@@ -733,7 +733,7 @@ Day-ahead price publication cycle.
 
 - Unauthenticated and easy to use.
 - Not a Belgian official API.
-- License attribution must be shown if used.
+- License attribution must be shown if used. The UI Data Sources section links Energy-Charts and states the CC BY 4.0 license explicitly.
 - Data is a wholesale/day-ahead BE bidding-zone signal, not a household's exact supplier tariff.
 - Actual cost depends on the user's contract, supplier markup, taxes, grid fees, VAT, and other billing components.
 - Missing future days can return `404` and must not break recommendations.
