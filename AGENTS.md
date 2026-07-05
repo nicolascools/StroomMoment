@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This repository is intended to be used over many sessions with AI/code agents. Preserve context and make small, deliberate changes.
+Inherits the kernel (`agent-os` repo). This repository is intended to be used over many sessions with AI/code agents. Preserve context and make small, deliberate changes.
 
 ## Core Rules
 
