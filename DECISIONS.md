@@ -116,6 +116,24 @@ Decision: Use Recharts for the first public PoC charting slice in the Next.js fr
 
 Rationale: Recharts is a common React charting library, supports responsive line charts without custom SVG code, and is sufficient for price, PV/wind, load, and candidate score visualizations. Charts use already-normalized backend API responses and do not introduce browser-side external data calls.
 
+## 2026-07-03: Public Errors Are Sanitized and Upstream Failures Are Negative-Cached
+
+Decision: Public API 502 responses return a generic message with details logged server-side only, and Elia fetch failures are negative-cached for 90 seconds. Freshness errors expose only the exception class name.
+
+Rationale: A public PoC must not leak upstream URLs or internals, and an Elia outage must not multiply into a paginated fetch fan-out for every visitor. Energy-Charts missing-day 404s were already negative-cached; this makes failure behavior consistent.
+
+## 2026-07-03: Scores Are Explicitly Relative; Avoid-Windows Added
+
+Decision: The UI states that scores compare today's feasible windows (100% = best available, not absolutely cheap/green), and recommendations include the three weakest feasible windows as informational avoid-windows when at least eight candidates exist.
+
+Rationale: Min-max scaling within candidates is honest and robust but can over-claim on bad days without explicit copy. Avoid-windows complete the original MVP promise using existing scoring only.
+
+## 2026-07-03: Planner Preferences Stay Client-Only
+
+Decision: Saved planner preferences use `localStorage` per device. No accounts, authentication, or server-side user storage for the PoC.
+
+Rationale: Preferences improve repeat use without creating any personal-data surface. Accounts remain deferred per DESIGN_NOTES.md.
+
 ## 2026-07-03: GitHub Is the Source-of-Truth Remote
 
 Decision: Use `https://github.com/nicolascools/StroomMoment` as the source-of-truth Git remote for StroomMoment.

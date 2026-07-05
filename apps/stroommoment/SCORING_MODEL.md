@@ -112,6 +112,10 @@ Price is a wholesale/day-ahead bidding-zone signal for BE. It is not the user's 
 
 Appliance profiles currently affect duration defaults, estimated energy, explanation text, and capacity-tariff guidance. They do not change score weights yet.
 
+Scores are relative, not absolute: each component is min-max scaled across the feasible candidate windows before the deadline. A `100%` price or renewable score means "best available window today", not that the moment is objectively cheap or green. The UI states this explicitly. Absolute anchors (for example price percentile versus recent history) require stored history and are deferred until a snapshot store exists.
+
+The recommendation also returns `avoid_windows`: the three weakest feasible windows, only when there are at least eight candidates so they cannot overlap the recommended top five. They use the same scoring and are informational.
+
 Capacity-tariff / `kwartierpiek` handling is informational in the public MVP. Without live household meter data, the app must not claim that a proposed start time will or will not create a new monthly 15-minute peak.
 
 ## Optional Later Scores

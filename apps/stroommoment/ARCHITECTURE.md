@@ -117,6 +117,7 @@ Rules:
 
 Current implementation:
 
+- Elia fetch failures are negative-cached for a short TTL (90 s) so an upstream outage does not trigger a full paginated fetch fan-out on every request; public API errors return sanitized messages while details go to server logs.
 - `backend/app/services/normalization.py` aligns load, PV, and wind into `ForecastPoint` records.
 - Raw UTC timestamps are stored as `timestamp_utc`.
 - Brussels display timestamps are exposed as `timestamp_brussels`.
@@ -182,7 +183,7 @@ Initial screens:
 - recommendation result
 - data/nerd view
 
-Current implementation: one Next.js page includes all initial UI sections. Recharts renders client-side charts for price, PV/wind, load, and top candidate score breakdowns using already-normalized API data.
+Current implementation: `app/page.tsx` is a thin client orchestrator. Presentation lives in `app/components/` (planner, status card, recommendation summary, charts, candidate/avoid windows, nerd table, data sources, skeletons, feedback) and shared logic in `app/lib/` (`types.ts`, `format.ts`, `api.ts`, `prefs.ts`). Recharts renders client-side charts for price, PV/wind, load, and top candidate score breakdowns using already-normalized API data. Planner preferences persist per device via `localStorage` only; there are no accounts.
 
 Charting choice:
 
