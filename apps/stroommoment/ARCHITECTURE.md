@@ -67,7 +67,7 @@ Initial services should eventually be:
 
 Use a practical JavaScript chart library such as **Recharts** for the MVP.
 
-Current implementation: no chart library yet. The first nerd view uses a data table to keep the vertical slice small.
+Current implementation: Recharts renders the secondary signal charts (price, PV/wind, load) inside a collapsible disclosure; the nerd data table remains as a separate disclosure.
 
 Reasons:
 
