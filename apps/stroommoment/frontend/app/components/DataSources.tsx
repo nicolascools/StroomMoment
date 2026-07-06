@@ -4,8 +4,7 @@ import type { Freshness } from "../lib/types";
 
 export function DataSources({ freshness }: { freshness: Freshness[] }) {
   return (
-    <section className="card data-sources">
-      <h2>Data Sources</h2>
+    <section className="data-sources">
       <div className="source-grid">
         <div>
           <strong>Grid and renewable forecasts</strong>

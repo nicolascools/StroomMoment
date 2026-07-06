@@ -47,6 +47,7 @@
 - Completed: sanitize public API errors and negative-cache Elia failures.
 - Completed: add avoid-windows output and relative-score copy.
 - Completed: client-only saved planner preferences via localStorage.
+- Completed: decision-first UI redesign (decision hero, day timeline, guided planner with appliance tiles and deadline presets, collapsible nerd/data sections).
 - Deferred: backend container non-root user; verify cache-mount ownership on the host first (see DESIGN_NOTES.md).
 - Completed: add source attribution text for Elia Open Data.
 - Completed: add Energy-Charts attribution text in the UI before public release.

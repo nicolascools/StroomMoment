@@ -1,24 +1,25 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
-import { AppliancePlanner } from "./components/AppliancePlanner";
+import { AlternativeWindows } from "./components/AlternativeWindows";
 import { ApplianceImpactCard } from "./components/ApplianceImpactCard";
-import { CandidateWindows } from "./components/CandidateWindows";
 import { DataSources } from "./components/DataSources";
-import { EnergyStatusCard } from "./components/EnergyStatusCard";
-import { FeedbackBlock } from "./components/FeedbackBlock";
+import { DayTimeline } from "./components/DayTimeline";
+import { DecisionHero } from "./components/DecisionHero";
+import { Disclosure } from "./components/Disclosure";
 import { NerdTable } from "./components/NerdTable";
-import { RecommendationSummary } from "./components/RecommendationSummary";
+import { PlannerCard } from "./components/PlannerCard";
 import { SignalCharts } from "./components/SignalCharts";
-import { SkeletonCard, SkeletonPlanner } from "./components/Skeletons";
-import { fetchAppliances, fetchRecommendation, fetchSignals } from "./lib/api";
-import { defaultDeadlineBrussels, defaultPowerValue, hasFreshnessWarning, latestFreshnessTimestamp } from "./lib/format";
+import { HeroSkeleton, SkeletonCard } from "./components/Skeletons";
+import { TopBar } from "./components/TopBar";
+import { FEEDBACK_URL, fetchAppliances, fetchRecommendation, fetchSignals } from "./lib/api";
+import { defaultDeadlineBrussels, defaultPowerValue, hasFreshnessWarning } from "./lib/format";
 import { loadPlannerPrefs, savePlannerPrefs } from "./lib/prefs";
 import type { ApplianceProfile, Recommendation, SignalSnapshot } from "./lib/types";
 
 const defaultApplianceId = "dishwasher";
-const modes = ["balanced", "renewable", "low_load", "cheapest"];
+const modes = ["balanced", "cheapest", "renewable", "low_load"];
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -32,6 +33,7 @@ export default function Home() {
   const [mode, setMode] = useState("balanced");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const heroRef = useRef<HTMLDivElement | null>(null);
 
   function onApplianceChange(nextApplianceId: string) {
     const profile = applianceProfiles.find((item) => item.id === nextApplianceId);
@@ -106,6 +108,7 @@ export default function Home() {
         powerKw,
       });
       setRecommendation(recommendationData);
+      heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -116,90 +119,100 @@ export default function Home() {
   const currentPoint = signals?.points[0];
   const priceAvailable = signals?.points.some((point) => point.price_eur_mwh !== null) ?? false;
   const activeFreshness = recommendation?.freshness.length ? recommendation.freshness : signals?.freshness ?? [];
-  const latestDataTimestamp = latestFreshnessTimestamp(activeFreshness);
   const freshnessWarning = hasFreshnessWarning(activeFreshness);
+  const dataStatus = !mounted || (!signals && !recommendation) ? null : freshnessWarning ? "warn" : "ok";
   const initialLoading = loading && !signals && !recommendation;
 
   return (
-    <main>
-      <section className="hero">
-        <p className="eyebrow">StroomMoment MVP</p>
-        <h1>When should I use electricity?</h1>
-        <p className="lead">Choose better times to run flexible electricity loads in Belgium.</p>
-      </section>
-
-      <section className="card intro-card">
-        <div>
-          <h2>Public PoC</h2>
-          <p>
-            Pick an appliance and deadline. StroomMoment recommends a window using Belgian load, PV/wind forecasts, and day-ahead price signals from public/available sources.
-          </p>
-          <p className="hint">It does not know your contract, exact tariff, household load, or P1 meter yet. Personal savings and real peak avoidance need that data later.</p>
-        </div>
-        <FeedbackBlock />
-      </section>
-
-      {!mounted ? (
-        <section className="card stable-shell">
-          <h2>Preparing planner</h2>
-          <p className="hint">Initializing Brussels-local defaults before loading Elia and price data.</p>
-        </section>
-      ) : null}
-
-      {mounted && error ? <div className="error">{error}</div> : null}
-
-      {mounted && initialLoading ? (
-        <>
-          <SkeletonPlanner />
-          <SkeletonCard lines={4} />
-        </>
-      ) : null}
-
-      {mounted && !initialLoading ? (
-        <>
-          <section className="grid two">
-            <EnergyStatusCard
-              point={currentPoint}
-              loading={loading}
-              latestDataTimestamp={latestDataTimestamp}
-              freshnessWarning={freshnessWarning}
-            />
-            <article className="card">
-              <RecommendationSummary recommendation={recommendation} freshnessWarning={freshnessWarning} loading={loading} />
-            </article>
+    <div className="app-shell">
+      <TopBar dataStatus={dataStatus} />
+      <main>
+        {!mounted ? (
+          <section className="hero-card hero-empty stable-shell">
+            <p className="hero-eyebrow">StroomMoment</p>
+            <h1 className="hero-question">When should I use electricity?</h1>
+            <p className="hero-sub">Finding the best time to run your appliances in Belgium.</p>
           </section>
+        ) : null}
 
-          <AppliancePlanner
-            profiles={applianceProfiles}
-            applianceId={applianceId}
-            duration={duration}
-            powerKw={powerKw}
-            deadline={deadline}
-            mode={mode}
-            modes={modes}
-            loading={loading}
-            priceAvailable={priceAvailable}
-            onApplianceChange={onApplianceChange}
-            onDurationChange={setDuration}
-            onPowerChange={setPowerKw}
-            onDeadlineChange={setDeadline}
-            onModeChange={setMode}
-            onSubmit={onSubmit}
-          />
+        {mounted && error ? (
+          <section className="error-banner">
+            <div>
+              <strong>We hit a snag</strong>
+              <p>{error}</p>
+            </div>
+            <button onClick={() => window.location.reload()} type="button">Try again</button>
+          </section>
+        ) : null}
 
-          {recommendation?.appliance_impact ? <ApplianceImpactCard impact={recommendation.appliance_impact} /> : null}
+        {mounted && initialLoading ? (
+          <>
+            <HeroSkeleton />
+            <SkeletonCard lines={6} />
+          </>
+        ) : null}
 
-          {signals ? <SignalCharts points={signals.points} /> : null}
+        {mounted && !initialLoading ? (
+          <>
+            <div ref={heroRef}>
+              <DecisionHero
+                currentPoint={currentPoint}
+                freshnessWarning={freshnessWarning}
+                loading={loading}
+                recommendation={recommendation}
+              />
+            </div>
 
-          {recommendation ? (
-            <CandidateWindows topWindows={recommendation.top_windows} avoidWindows={recommendation.avoid_windows ?? []} />
-          ) : null}
+            {recommendation ? <DayTimeline recommendation={recommendation} /> : null}
 
-          {signals ? <NerdTable points={signals.points} /> : null}
+            <PlannerCard
+              applianceId={applianceId}
+              deadline={deadline}
+              duration={duration}
+              loading={loading}
+              mode={mode}
+              modes={modes}
+              onApplianceChange={onApplianceChange}
+              onDeadlineChange={setDeadline}
+              onDurationChange={setDuration}
+              onModeChange={setMode}
+              onPowerChange={setPowerKw}
+              onSubmit={onSubmit}
+              powerKw={powerKw}
+              priceAvailable={priceAvailable}
+              profiles={applianceProfiles}
+            />
 
-          <DataSources freshness={activeFreshness} />
-        </>
-      ) : null}
-    </main>
+            {recommendation ? <AlternativeWindows recommendation={recommendation} /> : null}
+
+            {recommendation?.appliance_impact ? <ApplianceImpactCard impact={recommendation.appliance_impact} /> : null}
+
+            {signals ? (
+              <Disclosure subtitle="Price, PV/wind, and load forecasts behind the advice" title="The signals behind this advice">
+                <SignalCharts points={signals.points} />
+              </Disclosure>
+            ) : null}
+
+            {signals ? (
+              <Disclosure subtitle="Normalized 15-minute points, Europe/Brussels" title="Nerd data view">
+                <NerdTable points={signals.points} />
+              </Disclosure>
+            ) : null}
+
+            <Disclosure subtitle="Where the data comes from and how fresh it is" title="Data sources & disclaimers">
+              <DataSources freshness={activeFreshness} />
+            </Disclosure>
+          </>
+        ) : null}
+      </main>
+      <footer className="site-footer">
+        <p>
+          Public proof of concept. Data: Elia Open Data and Energy-Charts (CC BY 4.0). Prices are wholesale day-ahead signals for the Belgian bidding zone, not your supplier tariff.
+        </p>
+        {FEEDBACK_URL ? (
+          <a href={FEEDBACK_URL} rel="noreferrer" target="_blank">Send feedback</a>
+        ) : null}
+      </footer>
+    </div>
   );
 }
