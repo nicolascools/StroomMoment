@@ -16,6 +16,7 @@ This file stores durable context for future agent sessions.
 - The app should recommend good windows for flexible electricity loads such as dishwasher, washing machine, dryer, EV charging, boiler, heat pump, and custom loads.
 - The app should give simple recommendations but also expose the underlying raw and derived data.
 - The app should not be only a dashboard. The core value is decision support.
+- The public PoC uses a decision-console UI: answer-first recommendation hero, timeline, guided planner, alternatives/avoid windows, and secondary collapsible data sections.
 - Belgian-specific context matters, especially the Flanders capacity tariff / `kwartierpiek` logic.
 - The current MVP uses static appliance profiles and optional/manual power assumptions for energy and peak-risk context; it does not calculate real household peaks without P1/Home Assistant data.
 - The first public PoC target is `https://poc.coolsnet.com` on Proxmox, replacing the older wall-screen PoC route.
