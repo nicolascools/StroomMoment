@@ -2,6 +2,12 @@
 
 This file records product and technical decisions that should remain visible across future sessions.
 
+## 2026-07-06: Decision-First UI Over Dashboard UI
+
+Decision: The public frontend is a decision console, not a data dashboard. The visual hierarchy is: answer first (dark decision hero with the best window), a now-to-deadline timeline, a guided three-step planner (appliance tiles, priority segments, deadline presets), alternatives/avoid windows, and collapsible secondary sections for charts, the nerd table, and data sources.
+
+Rationale: The MVP promise is "tell me when to run an appliance, and show me why". The previous layout presented status cards, forms, charts, and tables with equal weight, which read as a dashboard. Nerd data and disclaimers stay available (inspectability remains a product decision) but move behind disclosure sections. No backend or endpoint changes; scoring and copy honesty are unchanged.
+
 ## 2026-07-01: Focus First on StroomMoment
 
 Decision: The first active product is the Belgian energy timing app, StroomMoment.

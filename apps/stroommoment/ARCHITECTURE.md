@@ -183,7 +183,7 @@ Initial screens:
 - recommendation result
 - data/nerd view
 
-Current implementation: `app/page.tsx` is a thin client orchestrator. Presentation lives in `app/components/` (planner, status card, recommendation summary, charts, candidate/avoid windows, nerd table, data sources, skeletons, feedback) and shared logic in `app/lib/` (`types.ts`, `format.ts`, `api.ts`, `prefs.ts`). Recharts renders client-side charts for price, PV/wind, load, and top candidate score breakdowns using already-normalized API data. Planner preferences persist per device via `localStorage` only; there are no accounts.
+Current implementation: a decision-first "console" layout. `app/page.tsx` is a thin client orchestrator; the visual hierarchy is: top bar (brand + data-status pill), `DecisionHero` (the answer: best window time range, day/starts-in chips, score meters, why-list, grid-now strip), `DayTimeline` (now-to-deadline strip with good and avoid lanes), `PlannerCard` (guided three-step planner: appliance icon tiles, segmented priority control, deadline preset chips + custom picker, collapsible fine-tune), `AlternativeWindows` (also-good cards and avoid chips), and three collapsible `Disclosure` sections for charts, the nerd table, and data sources/disclaimers. Shared logic lives in `app/lib/` (`types.ts`, `format.ts`, `api.ts`, `prefs.ts`). Recharts renders the secondary signal charts from already-normalized API data. Planner preferences persist per device via `localStorage` only; there are no accounts.
 
 Charting choice:
 

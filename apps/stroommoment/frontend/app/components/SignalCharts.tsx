@@ -54,13 +54,7 @@ export function SignalCharts({ points }: { points: ForecastPoint[] }) {
   if (!data.length) return null;
   return (
     <section className="charts-section">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow mini">Signals</p>
-          <h2>What the recommendation sees</h2>
-        </div>
-        <p className="hint">Next 24 hours, 15-minute Belgian signals. Price is wholesale/day-ahead, not your exact tariff.</p>
-      </div>
+      <p className="hint">Next 24 hours, 15-minute Belgian signals. Price is wholesale/day-ahead, not your exact tariff.</p>
       <div className="chart-grid">
         <ChartPanel title="BE day-ahead price" subtitle="EUR/MWh, wholesale bidding-zone signal">
           <ResponsiveContainer width="100%" height={240}>
@@ -107,7 +101,7 @@ export function SignalCharts({ points }: { points: ForecastPoint[] }) {
 
 function ChartPanel({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
-    <article className="card chart-card">
+    <article className="chart-card">
       <div className="chart-title">
         <h3>{title}</h3>
         <p>{subtitle}</p>

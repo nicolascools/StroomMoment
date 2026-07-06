@@ -4,9 +4,8 @@ import type { ForecastPoint } from "../lib/types";
 export function NerdTable({ points }: { points: ForecastPoint[] }) {
   if (!points.length) return null;
   return (
-    <section className="card">
-      <h2>Nerd Data View</h2>
-      <p>Upcoming normalized 15-minute points from Elia. Times are shown in Europe/Brussels.</p>
+    <section>
+      <p className="hint">Upcoming normalized 15-minute points from Elia. Times are shown in Europe/Brussels.</p>
       <div className="table-wrap">
         <table>
           <thead>
