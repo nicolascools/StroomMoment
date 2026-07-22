@@ -1,5 +1,7 @@
 # Roadmap
 
+Last reviewed: 2026-07-01. This is directional sequencing, not a completion report. Current completion is unknown unless recorded in the dated [status](STATUS.md) or [app TODO](apps/stroommoment/TODO.md).
+
 ## Phase 0: API Validation and Workspace Setup
 
 - Validate candidate Belgian/open data sources.

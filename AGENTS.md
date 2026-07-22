@@ -21,7 +21,7 @@ Inherits the kernel (`agent-os` repo). This repository is intended to be used ov
 
 - Backend should be Python FastAPI unless a later decision changes this.
 - Frontend should be Next.js unless a later decision changes this.
-- Start with SQLite for cache/snapshots; move to PostgreSQL or TimescaleDB only when needed.
+- Keep the implemented file cache for the public PoC; consider SQLite for cache inspection or snapshots only when needed.
 - Use Docker Compose for local development and later deployment.
 - Keep future Home Assistant, P1 meter, and MQTT support in mind, but do not implement them in the public MVP.
 

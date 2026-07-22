@@ -2,6 +2,8 @@
 
 Freeform research notes for StroomMoment.
 
+Last reviewed: 2026-07-04. Time-sensitive API and deployment statements are historical unless they carry a newer verification date.
+
 ## Open Questions
 
 - Can Elia `ods191` near-real-time CO2 become reliable later, or is another CO2 source needed?
@@ -15,7 +17,7 @@ Freeform research notes for StroomMoment.
 - Elia `ods002` is usable for Belgian total load, measured values, and forecasts at 15-minute granularity.
 - Elia `ods087` is usable for Belgian PV forecasts at 15-minute granularity; use `region="Belgium"`.
 - Elia `ods086` is usable for wind forecasts at 15-minute granularity; aggregate by `datetime` and optionally keep onshore/offshore split.
-- Elia `ods191` near-real-time CO2 is documented but currently returns zero records.
+- Elia `ods191` near-real-time CO2 was documented but returned zero records when validated on 2026-07-01; its current behavior is unknown.
 - Elia `ods192` historical CO2 works at 1-hour granularity but is D-1 and not suitable for future recommendation scoring.
 - Elia imbalance and balancing price datasets are reachable but are not suitable as household day-ahead price signals.
 - ENTSO-E day-ahead price API returned `401` without a token; official price support requires token setup and XML parsing.
@@ -33,7 +35,7 @@ Freeform research notes for StroomMoment.
 - Energy-Charts `404` responses for unpublished future days are cached briefly so repeated requests do not hammer the provider.
 - Backend file cache lives in `backend/.cache/`; Elia uses a 5-minute TTL and Energy-Charts uses a 15-minute TTL.
 - Opendatasoft large ungrouped requests failed with `400 Bad Request`; the Elia client now paginates at 100 records per page.
-- Next.js build on this Windows environment warned that native SWC was not usable and fell back to WASM. Turbopack failed, so scripts use Webpack.
+- The original Windows development environment warned that native SWC was not usable and fell back to WASM. Turbopack failed there, so scripts use Webpack.
 - Appliance profiles are implemented in `backend/app/scoring/appliances.py` and exposed through `GET /api/appliances`.
 - Recommendation requests accept `appliance_id` and optional `power_kw`; the backend returns `appliance` and `appliance_impact` with estimated kWh and capacity-tariff guidance.
 - Appliance impact is informational only and does not alter the scoring weights.
@@ -73,9 +75,9 @@ Freeform research notes for StroomMoment.
 
 - Public PoC target is `https://poc.coolsnet.com`.
 - The public Compose deployment uses a small Caddy router so the browser can call same-origin `/api/...` and the backend service is not directly exposed.
-- The previous wall-screen PoC on `poc.coolsnet.com` can be removed or bypassed when StroomMoment is live.
-- GitHub remote now exists at `https://github.com/nicolascools/StroomMoment`. The local Windows repo uses this as `origin`.
-- If `/opt/stroommoment` says it is ahead of `bundle-origin`, that means the deployment host was seeded from a temporary bundle remote and now has local commits not represented by a durable shared remote. Replace `bundle-origin` with the GitHub remote and use `git pull --ff-only` before Compose rebuilds.
-- This session could not configure the deployed repo directly because non-interactive SSH auth to `nicolas@192.168.1.47` failed. Configure it from an authenticated shell on `stroommoment-01`.
-- Public PoC metadata now includes favicon/app icons and `robots.txt`. Robots currently allow indexing because the site is already intentionally public.
+- The previous wall-screen PoC was the route intended for replacement; its current retention state is unknown.
+- GitHub remote `https://github.com/nicolascools/StroomMoment` was created and selected as source of truth. The Estate workspace currently uses it as `origin`.
+- The deployment host was originally seeded from `bundle-origin`; whether that remote still exists is unknown as of 2026-07-22. Follow `DEPLOYMENT.md` only after checking the host's current Git state.
+- A prior session could not configure the deployed repo because non-interactive SSH authentication failed; this records history, not current access or host configuration.
+- Repository metadata includes favicon/app icons and a `robots.txt` that allows indexing; deployed behavior was not re-verified in this review.
 - Persistent file cache is enough for the PoC. Keep SQLite, PostgreSQL, TimescaleDB, and InfluxDB open for later discussion.

@@ -54,7 +54,7 @@ Rationale: These datasets are public, unauthenticated, validated with working re
 
 Decision: CO2 should be treated as optional/context-only until a reliable current or forecast source is available.
 
-Rationale: Elia `ods191` near-real-time CO2 is documented but currently returns zero records. Elia `ods192` works but is historical D-1 data and should not drive future recommendations.
+Rationale: Elia `ods191` near-real-time CO2 was documented but returned zero records when validated on 2026-07-01. Elia `ods192` worked but was historical D-1 data and should not drive future recommendations.
 
 ## 2026-07-01: Official Price Complexity and Weather Are Deferred
 

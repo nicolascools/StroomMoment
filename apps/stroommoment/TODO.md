@@ -1,11 +1,13 @@
 # TODO
 
+Last reviewed for implementation state: 2026-07-06. Completion labels below reflect repository knowledge recorded by that date; deployment and external-service state was not re-verified during the 2026-07-22 documentation review.
+
 ## Documentation and Validation
 
 - Completed: validate Elia datasets for load, PV, wind, CO2, imbalance, and price-like data.
 - Completed: validate API access patterns and query parameters for required Elia sources.
 - Completed: confirm practical forecast horizons for load, PV, and wind.
-- Completed: document that Elia `ods191` near-real-time CO2 currently returns zero records.
+- Completed: document that Elia `ods191` near-real-time CO2 returned zero records when validated on 2026-07-01.
 - Completed: document that price should not block v0.1.
 - Recheck Elia `ods191` CO2 before implementing a public CO2 chart.
 - Completed: decide Energy-Charts is acceptable as the first optional wholesale/day-ahead price signal.
@@ -68,6 +70,6 @@
 - Completed: keep the public PoC stateless with no accounts, no authentication, and no user database.
 - Completed: keep persistent backend cache as a file cache for now.
 - Completed: create and configure local GitHub remote for `https://github.com/nicolascools/StroomMoment`.
-- Configure `/opt/stroommoment` on `stroommoment-01` to replace `bundle-origin` with the GitHub remote.
+- Status unknown as of 2026-07-22: verify whether `/opt/stroommoment` on `stroommoment-01` still uses `bundle-origin` before treating remote replacement as an open task.
 - Consider SQLite, PostgreSQL, TimescaleDB, or InfluxDB only after the PoC shows a concrete need for history, analytics, or user-specific state.
 - Consider CI/CD later with GitHub/Gitea and versioned Docker images.

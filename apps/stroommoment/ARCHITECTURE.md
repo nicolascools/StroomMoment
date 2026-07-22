@@ -29,17 +29,17 @@ Reasons:
 
 SvelteKit would also be a good fit, but Next.js is the default recommendation for fastest chart/form implementation unless a future decision changes this.
 
-Current implementation: Next.js App Router in `frontend/`. The local scripts use Webpack (`next dev --webpack`, `next build --webpack`) because this Windows environment fell back to WASM SWC bindings and Turbopack requires native bindings.
+Current implementation: Next.js App Router in `frontend/`. The local scripts use Webpack (`next dev --webpack`, `next build --webpack`) because the original Windows development environment fell back to WASM SWC bindings and Turbopack required native bindings there.
 
-### Database
+### Storage
 
-Start with **SQLite**.
+Use the server-side file cache for the public PoC.
 
-Current implementation: file cache in `backend/.cache/` for the first slice. SQLite is still the likely next step if cache inspection or snapshot persistence becomes useful.
+Current implementation: file cache in `backend/.cache/` for the first slice. SQLite is a possible next step if cache inspection or snapshot persistence becomes useful.
 
-Use it for:
+Use SQLite later for:
 
-- API response cache
+- inspectable API response caching if the file cache becomes insufficient
 - normalized time-series snapshots if needed
 - local development simplicity
 

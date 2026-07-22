@@ -1,5 +1,7 @@
 # StroomMoment Deployment
 
+Last live verification recorded: 2026-07-06. The 2026-07-22 documentation review did not query the host, public URL, DNS, or edge proxy. Treat host state and deployed revisions as unknown; the procedures below do not establish current state unless their Git, Compose, and health checks are run separately.
+
 ## Purpose
 
 Deploy the StroomMoment public PoC to Proxmox at `https://poc.coolsnet.com` with a simple, reproducible Docker Compose workflow.
@@ -11,11 +13,11 @@ Deploy the StroomMoment public PoC to Proxmox at `https://poc.coolsnet.com` with
 - Persistent backend file cache.
 - Manual update and rollback procedure.
 
-## Chosen Proxmox Target
+## Recorded Proxmox Target
 
-Target: Debian LXC named `stroommoment-01`.
+Recorded target: Debian LXC named `stroommoment-01`.
 
-Planned values:
+Documented values:
 
 | Item | Value |
 | --- | --- |
@@ -63,10 +65,9 @@ The source-of-truth remote is GitHub:
 https://github.com/nicolascools/StroomMoment
 ```
 
-Local Windows development should push to `origin/master`:
+From the development workspace, publish to `origin/master` only when explicitly approved:
 
-```powershell
-cd C:\Projects\StroomMoment
+```bash
 git status
 git add .
 git commit -m "Describe the change"
@@ -121,11 +122,10 @@ If `/opt/stroommoment` reports that it is ahead of `bundle-origin`, that means t
 
 Use bundles only if GitHub or SSH deploy keys are unavailable.
 
-Temporary manual copy example from Windows:
+Temporary manual copy example from a development workstation:
 
-```powershell
-cd C:\Projects\StroomMoment
-scp C:\Users\$env:USERNAME\AppData\Local\Temp\stroommoment.bundle nicolas@192.168.1.47:/tmp/stroommoment.bundle
+```bash
+scp <path-to-stroommoment.bundle> nicolas@192.168.1.47:/tmp/stroommoment.bundle
 ssh nicolas@192.168.1.47 "sudo mkdir -p /opt/stroommoment && sudo chown nicolas:nicolas /opt/stroommoment && git clone /tmp/stroommoment.bundle /opt/stroommoment"
 ```
 
@@ -144,7 +144,7 @@ cd /opt/stroommoment/apps/stroommoment
 cp .env.example .env
 ```
 
-Current public PoC defaults:
+Documented public PoC defaults; compare them with the host before deployment:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=
@@ -186,10 +186,10 @@ curl -fsS http://127.0.0.1:8080/api/signals?hours=1 | head
 
 ## Manual Deploy Workflow
 
-Local development:
+From the development workspace, first inspect the intended revision:
 
-```powershell
-cd C:\Projects\StroomMoment
+```bash
+git status
 ```
 
 On the app host:
@@ -334,7 +334,7 @@ Do not add CI/CD until manual deployment is boring and the app has enough users 
 
 ## Known Limitations
 
-- No user accounts or saved preferences.
+- No user accounts or server-side saved profiles; planner preferences use browser `localStorage`.
 - No personal tariff, P1, Home Assistant, or MQTT integration.
 - Price is a day-ahead wholesale BE signal, not an exact household tariff.
 - File cache is not a historical database.

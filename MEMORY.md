@@ -19,7 +19,7 @@ This file stores durable context for future agent sessions.
 - The public PoC uses a decision-console UI: answer-first recommendation hero, timeline, guided planner, alternatives/avoid windows, and secondary collapsible data sections.
 - Belgian-specific context matters, especially the Flanders capacity tariff / `kwartierpiek` logic.
 - The current MVP uses static appliance profiles and optional/manual power assumptions for energy and peak-risk context; it does not calculate real household peaks without P1/Home Assistant data.
-- The first public PoC target is `https://poc.coolsnet.com` on Proxmox, replacing the older wall-screen PoC route.
+- The public PoC hostname selected in `DECISIONS.md` is `https://poc.coolsnet.com`; deployment state belongs in the dated `STATUS.md` checkpoint.
 - The public PoC should remain stateless from the user perspective: no login, no accounts, no user database, and no personal user data.
 - Persistent backend file cache is acceptable for the public PoC; database options remain deferred until history, richer caching, or user-specific data justify them.
 
